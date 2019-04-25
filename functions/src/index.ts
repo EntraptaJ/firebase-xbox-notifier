@@ -32,8 +32,7 @@ const ProcessDocuments = async (doc: FirebaseFirestore.DocumentReference) => {
 const ProcessUserPresence = async (item: PresenceResponse): Promise<void> => {
     let user = Users.find(a => a.XUID === item.xuid) as UserRecord;
     if (!item.devices) {
-        if (user.notified === false) return 
-        await SetNotified(user.username, false);
+        if (user.notified === true) await SetNotified(user.username, false);
         return;
     }
     if (item.devices)
@@ -97,13 +96,12 @@ export const scheduledFunction = functions.pubsub
         ]);
 
         let db = admin.firestore().collection('XBox'); // The Firebase Firestore for storing Users subscription data.
-        let doc = db.listDocuments();
         let [{ userHash, XSTSToken }, docs] = await Promise.all([
             authenticate(
                 functions.config().xbox.usr,
                 functions.config().xbox.psw
             ),
-            doc
+            db.listDocuments()
         ]);
 
         await Promise.all(docs.map(item => ProcessDocuments(item)));
@@ -128,48 +126,6 @@ export const scheduledFunction = functions.pubsub
 
         await Promise.all(body.map(item => ProcessUserPresence(item)));
         return;
-        /*
-        body.map(item => {
-            const c = usrs.find(
-                a => a.XUID == item.xuid
-            ) as import('./types').User;
-
-            if (item.devices) {
-                item.devices.map(({ titles }) => {
-                    titles.map(({ name }) => {
-                        if (Games.includes(name)) {
-                            let { Subscribers } = c.Games.find(
-                                item => item.name == name
-                            ) as import('./types').Game;
-                            Subscribers.map(i => {
-                                const MSG = admin.messaging();
-
-                                if (!c.notified) {
-                                    MSG.send({
-                                        token: i,
-                                        android: {
-                                            notification: {
-                                                tag: `MC-${c.username}-${name}`,
-                                                channelId: 'games-notify'
-                                            }
-                                        },
-                                        notification: {
-                                            title: 'XBox Notifier',
-                                            body: `${
-                                                c.username
-                                            } is Online on ${name}`
-                                        }
-                                    });
-                                    SetNotified(c.username, true);
-                                }
-                            });
-                        }
-                    });
-                });
-            } else {
-                SetNotified(c.username, false);
-            }
-        }); */
     });
 
 const SetNotified = async (username: string, notified: boolean) => {
