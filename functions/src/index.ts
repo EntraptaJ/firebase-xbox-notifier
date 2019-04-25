@@ -11,8 +11,6 @@ import { ProcessUser } from './Users';
 admin.initializeApp(functions.config().firebase);
 
 let Users: import('./types').User[] = []; // The array used for storing User data within this execution
-//const XUIDs: string[] = [];
-
 
 /*
 const ProcessDocuments = async (doc: FirebaseFirestore.DocumentReference) => {
@@ -88,8 +86,9 @@ const SendNotification = async ({
 };
 
 export const scheduledFunction = functions.pubsub
-    .schedule(`every 1 minutes`)
+    .schedule(`every 1 minutes`).retryConfig({ })
     .onRun(async context => {
+        Users = [];
         const [got, { authenticate }] = await Promise.all([
             import('got'),
             import('@xboxreplay/xboxlive-auth')
@@ -103,14 +102,12 @@ export const scheduledFunction = functions.pubsub
             ),
             db.get()
         ]);
-
-        const [XUIDs] = await Promise.all(docs2.docs.map((usr) => ProcessUser(usr, Users)))
-        console.log(XUIDs)
-        console.log(Users);
+        const XUIDs: string[] = []
+        await Promise.all(docs2.docs.map((usr) => ProcessUser(usr, Users, XUIDs)))
         //await Promise.all(docs.map(item => ProcessDocuments(item)));
         const {
             body
-        }: { body: import('./types').PresenceResponse[] } = await got.post(
+        }: { body: PresenceResponse[] } = await got.post(
             `https://userpresence.xboxlive.com/users/batch`,
             {
                 json: true,
