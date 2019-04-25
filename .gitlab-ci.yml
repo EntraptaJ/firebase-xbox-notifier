@@ -9,8 +9,7 @@ deploy_production:
   script:
     - cd ./functions/
     - npm ci
-    - firebase use --token $FIREBASE_DEPLOY_KEY
-    - npm run deploy
+    - npm run deploy --token "$FIREBASE_DEPLOY_KEY"
   cache:
     paths:
       - node_modules/
