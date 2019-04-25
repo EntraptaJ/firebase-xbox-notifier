@@ -32,6 +32,7 @@ const ProcessDocuments = async (doc: FirebaseFirestore.DocumentReference) => {
 const ProcessUserPresence = async (item: PresenceResponse): Promise<void> => {
     let user = Users.find(a => a.XUID === item.xuid) as UserRecord;
     if (!item.devices) {
+        if (user.notified === false) return 
         await SetNotified(user.username, false);
         return;
     }
