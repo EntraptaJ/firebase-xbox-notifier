@@ -6,19 +6,19 @@ import {
     User as UserRecord,
     XBoxDBRecord
 } from './types';
+import { ProcessUser } from './Users';
 
 admin.initializeApp(functions.config().firebase);
 
 let Users: import('./types').User[] = []; // The array used for storing User data within this execution
-const XUIDs: string[] = [];
-const Games: string[] = [];
+//const XUIDs: string[] = [];
 
+
+/*
 const ProcessDocuments = async (doc: FirebaseFirestore.DocumentReference) => {
     let document = await doc.get();
+    if(!document.exists) return;
     let data = document.data() as XBoxDBRecord;
-    data.Games.map(({ name }) => {
-        Games.push(name);
-    });
     Users.push({
         XUID: data.XUID,
         username: doc.path.replace(/XBox\//, ''),
@@ -27,7 +27,7 @@ const ProcessDocuments = async (doc: FirebaseFirestore.DocumentReference) => {
     });
     XUIDs.push(data.XUID);
     return;
-};
+}; */
 
 const ProcessUserPresence = async (item: PresenceResponse): Promise<void> => {
     let user = Users.find(a => a.XUID === item.xuid) as UserRecord;
@@ -38,7 +38,7 @@ const ProcessUserPresence = async (item: PresenceResponse): Promise<void> => {
     if (item.devices)
         item.devices.map(({ titles }) =>
             titles.map(({ name }) => {
-                if (!Games.includes(name)) return;
+                if (!user.Games.some((b) => b.name == name)) return;
                 const { Subscribers } = user.Games.find(
                     item => item.name == name
                 ) as Game;
@@ -96,15 +96,18 @@ export const scheduledFunction = functions.pubsub
         ]);
 
         let db = admin.firestore().collection('XBox'); // The Firebase Firestore for storing Users subscription data.
-        let [{ userHash, XSTSToken }, docs] = await Promise.all([
+        let [{ userHash, XSTSToken }, docs2] = await Promise.all([
             authenticate(
                 functions.config().xbox.usr,
                 functions.config().xbox.psw
             ),
-            db.listDocuments()
+            db.get()
         ]);
 
-        await Promise.all(docs.map(item => ProcessDocuments(item)));
+        const [XUIDs] = await Promise.all(docs2.docs.map((usr) => ProcessUser(usr, Users)))
+        console.log(XUIDs)
+        console.log(Users);
+        //await Promise.all(docs.map(item => ProcessDocuments(item)));
         const {
             body
         }: { body: import('./types').PresenceResponse[] } = await got.post(
