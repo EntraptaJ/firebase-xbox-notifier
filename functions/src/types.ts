@@ -1,31 +1,42 @@
 export type XBoxDBRecord = {
-    XUID: string;
-    Games: Game[];
-    notified: boolean;
+  XUID: string;
+  Games: Game[];
+  notified: boolean;
 };
 
 export type PresenceResponse = {
-    xuid: string;
-    devices: {
-        type: string;
-        titles: {
-            id: string;
-            name: string;
-            lastModified: string;
-            state: string;
-            placement: string;
-        }[];
+  xuid: string;
+  state: string;
+  devices: {
+    type: string;
+    titles: {
+      id: string;
+      name: string;
+      lastModified: string;
+      state: string;
+      placement: string;
     }[];
+  }[];
+  lastSeen: {
+    deviceType: string;
+    titleId: string;
+    titleName: string;
+    timestamp: string;
+  };
+};
+
+export type Subscribers = {
+  token: string;
+  notified: boolean;
 };
 
 export type Game = {
-    name: string;
-    Subscribers: string[];
+  name: string;
+  Subscribers: Subscribers[];
 };
 
 export type User = {
-    XUID: string;
-    username: string;
-    Games: Game[];
-    notified: boolean;
+  XUID: string;
+  username: string;
+  Games: Game[];
 };
